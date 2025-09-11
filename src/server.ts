@@ -16,6 +16,7 @@ import helmet from "helmet";
  * Custom modules
  */
 import config from "@/config";
+import limiter from "@/lib/express_rate_limit";
 
 /**
  * Types
@@ -43,20 +44,37 @@ const corsOptions: CorsOptions = {
 };
 
 app.use(cors(corsOptions));
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
-// app.use(cookieParser());
-// app.use(
-//   compression({
-//     threshold: 1024,
-//   }),
-// );
-// app.use(helmet());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(
+  compression({
+    threshold: 1024,
+  }),
+);
+app.use(helmet());
 
-// (async () => {
-//   try {
-//   } catch (err) {}
-// })();
+app.use(limiter);
+
+(async () => {
+  try {
+    app.get("/", (req, res) => {
+      res.json({
+        message: "Hello world",
+      });
+    });
+
+    app.listen(config.PORT, () => {
+      console.log(`Server running: http://localhost:${config.PORT}`);
+    });
+  } catch (err) {
+    console.log("Failed to start the server", err);
+
+    if (config.NODE_ENV === "production") {
+      process.exit(1);
+    }
+  }
+})();
 
 // const handleServerShutdown = async () => {
 //   try {
@@ -66,13 +84,3 @@ app.use(cors(corsOptions));
 
 // process.on("SIGTERM", handleServerShutdown);
 // process.on("SIGINT", handleServerShutdown);
-
-app.get("/", (req, res) => {
-  res.json({
-    message: "hello world",
-  });
-});
-
-app.listen(config.PORT, () => {
-  console.log("Server is running");
-});
